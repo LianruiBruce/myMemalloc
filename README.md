@@ -1,5 +1,6 @@
 # memalloc
-
+This is the original readme from https://github.com/arjun024/memalloc/blob/master/README.md?plain=1
+This project is my own practice and learn how to allocate the memory by using C. I will keep refactor this code. I run this code on Mac's VS code.
 memalloc is a simple memory allocator.
 
 It implements <a href="http://man7.org/linux/man-pages/man3/free.3.html">malloc()</a>, <a href="http://man7.org/linux/man-pages/man3/free.3.html">calloc()</a>, <a href="http://man7.org/linux/man-pages/man3/free.3.html">realloc()</a> and <a href="http://man7.org/linux/man-pages/man3/free.3.html">free()</a>.
