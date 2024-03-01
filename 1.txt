@@ -1,0 +1,546 @@
+/*******************************************
+ * Solutions for the CS:APP Performance Lab
+ ********************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "defs.h"
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+/*
+ * Please fill in the following student struct
+ */
+student_t student = {
+    "Lianrui Geng",      /* Full name */
+    "u1346008@utah.edu", /* Email address */
+};
+
+typedef struct
+{
+    int sumRed;
+    int sumGreen;
+    int sumBlue;
+    int count;
+} pixel_sum;
+
+/***************
+ * COMPLEX KERNEL
+ ***************/
+
+/******************************************************
+ * Your different versions of the complex kernel go here
+ ******************************************************/
+
+/*
+ * naive_complex - The naive baseline version of complex
+ */
+// char naive_complex_descr[] = "naive_complex: Naive baseline implementation";
+// void naive_complex(int dim, pixel *src, pixel *dest)
+// {
+//     register int i, j, k, l;
+//     for (i = 0; i < dim; i += 8)
+//     {
+//         for (j = 0; j < dim; j += 8)
+//         {
+//             int ibounds = i + 9;
+//             register int jbounds = j + 9;
+//             register int index_src = RIDX(i, j, dim);
+//             register int stride = dim - 8;
+//             for (k = i + 1; k < ibounds; k++, index_src += stride)
+//             {
+//                 register int reducedj = dim - k;
+//                 for (l = j + 1; l < jbounds; l++, index_src++)
+//                 {
+//                     int index_dest = RIDX(dim - l, reducedj, dim);
+//                     unsigned short gray_value = (src[index_src].red + src[index_src].green + src[index_src].blue) / 3;
+//                     dest[index_dest].red = dest[index_dest].green = dest[index_dest].blue = gray_value;
+//                 }
+//             }
+//         }
+//     }
+// }
+
+/*
+ * complex - Your current working version of complex
+ * IMPORTANT: This is the version you will be graded on
+ */
+char complex_descr[] = "complex: Current working version";
+void complex(int dim, pixel *src, pixel *dest)
+{
+    for (int i = 0; i < dim; i += 8)
+    {
+        for (int j = 0; j < dim; j += 8)
+        {
+            for (int k = i; k < i + 8; k++)
+            {
+                int index_src_base = RIDX(k, j, dim);
+                int reducedk = dim - 1 - k;
+                int index_dest_0 = RIDX(dim - 1 - j, reducedk, dim);
+                int index_dest_1 = RIDX(dim - 2 - j, reducedk, dim);
+                int index_dest_2 = RIDX(dim - 3 - j, reducedk, dim);
+                int index_dest_3 = RIDX(dim - 4 - j, reducedk, dim);
+                int index_dest_4 = RIDX(dim - 5 - j, reducedk, dim);
+                int index_dest_5 = RIDX(dim - 6 - j, reducedk, dim);
+                int index_dest_6 = RIDX(dim - 7 - j, reducedk, dim);
+                int index_dest_7 = RIDX(dim - 8 - j, reducedk, dim);
+
+                pixel temp0 = src[index_src_base];
+                unsigned short gray_value_0 = (temp0.red + temp0.green + temp0.blue) / 3;
+                dest[index_dest_0].red = dest[index_dest_0].green = dest[index_dest_0].blue = gray_value_0;
+
+                pixel temp1 = src[index_src_base + 1];
+                unsigned short gray_value_1 = (temp1.red + temp1.green + temp1.blue) / 3;
+                dest[index_dest_1].red = dest[index_dest_1].green = dest[index_dest_1].blue = gray_value_1;
+
+                pixel temp2 = src[index_src_base + 2];
+                unsigned short gray_value_2 = (temp2.red + temp2.green + temp2.blue) / 3;
+                dest[index_dest_2].red = dest[index_dest_2].green = dest[index_dest_2].blue = gray_value_2;
+
+                pixel temp3 = src[index_src_base + 3];
+                unsigned short gray_value_3 = (temp3.red + temp3.green + temp3.blue) / 3;
+                dest[index_dest_3].red = dest[index_dest_3].green = dest[index_dest_3].blue = gray_value_3;
+
+                pixel temp4 = src[index_src_base + 4];
+                unsigned short gray_value_4 = (temp4.red + temp4.green + temp4.blue) / 3;
+                dest[index_dest_4].red = dest[index_dest_4].green = dest[index_dest_4].blue = gray_value_4;
+
+                pixel temp5 = src[index_src_base + 5];
+                unsigned short gray_value_5 = (temp5.red + temp5.green + temp5.blue) / 3;
+                dest[index_dest_5].red = dest[index_dest_5].green = dest[index_dest_5].blue = gray_value_5;
+
+                pixel temp6 = src[index_src_base + 6];
+                unsigned short gray_value_6 = (temp6.red + temp6.green + temp6.blue) / 3;
+                dest[index_dest_6].red = dest[index_dest_6].green = dest[index_dest_6].blue = gray_value_6;
+
+                pixel temp7 = src[index_src_base + 7];
+                unsigned short gray_value_7 = (temp7.red + temp7.green + temp7.blue) / 3;
+                dest[index_dest_7].red = dest[index_dest_7].green = dest[index_dest_7].blue = gray_value_7;
+            }
+        }
+    }
+}
+
+/*********************************************************************
+ * register_complex_functions - Register all of your different versions
+ *     of the complex kernel with the driver by calling the
+ *     add_complex_function() for each test function. When you run the
+ *     driver program, it will test and report the performance of each
+ *     registered test function.
+ *********************************************************************/
+
+void register_complex_functions()
+{
+    add_complex_function(&complex, complex_descr);
+    // add_complex_function(&naive_complex, naive_complex_descr);
+}
+
+/***************
+ * MOTION KERNEL
+ **************/
+
+/***************************************************************
+ * Various helper functions for the motion kernel
+ * You may modify these or add new ones any way you like.
+ **************************************************************/
+
+// /* Compute min and max of two integers, respectively */
+// // static int min(int a, int b) { return (a < b ? a : b); }
+// // static int max(int a, int b) { return (a > b ? a : b); }
+
+// static void initialize_pixel_sum(pixel_sum *sum)
+// {
+//     sum->red = sum->green = sum->blue = 0;
+//     sum->num = 0;
+//     return;
+// }
+
+// static void accumulate_sum(pixel_sum *sum, pixel p)
+// {
+//     sum->red += (int)p.red;
+//     sum->green += (int)p.green;
+//     sum->blue += (int)p.blue;
+//     sum->num++;
+//     return;
+// }
+// static void assign_sum_to_pixel(pixel *current_pixel, pixel_sum sum)
+// {
+//     current_pixel->red = (unsigned short)(sum.red / sum.num);
+//     current_pixel->green = (unsigned short)(sum.green / sum.num);
+//     current_pixel->blue = (unsigned short)(sum.blue / sum.num);
+//     return;
+// }
+
+// /*
+//  * weighted_combo - Returns new pixel value at (i,j)
+//  */
+// static pixel weighted_combo(int dim, int i, int j, pixel *src)
+// {
+//     pixel_sum sum;
+//     initialize_pixel_sum(&sum);
+
+//     // Determine boundaries for the loop to avoid checking boundaries inside the loop
+//     int i_min = i, i_max = MIN(i + 3, dim);
+//     int j_min = j, j_max = MIN(j + 3, dim);
+
+//     for (int ii = i_min; ii < i_max; ii++)
+//     {
+//         for (int jj = j_min; jj < j_max; jj++)
+//         {
+//             accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+//         }
+//     }
+//     pixel result;
+//     assign_sum_to_pixel(&result, sum);
+//     return result;
+// }
+
+// /******************************************************
+//  * Your different versions of the motion kernel go here
+//  ******************************************************/
+
+// /*
+//  * naive_motion - The naive baseline version of motion
+//  */
+// char naive_motion_descr[] = "naive_motion: Naive baseline implementation";
+// void naive_motion(int dim, pixel *src, pixel *dst)
+// {
+//     int i, j;
+
+//     for (i = 0; i < dim; i++)
+//         for (j = 0; j < dim; j++)
+//             dst[RIDX(i, j, dim)] = weighted_combo(dim, i, j, src);
+// }
+
+/*
+ * motion - Your current working version of motion.
+ * IMPORTANT: This is the version you will be graded on
+ */
+char motion_descr[] = "motion: Current working version";
+void motion(int dim, pixel *src, pixel *dst)
+{
+    pixel_sum current_sum;
+    for (int i = 0; i < dim - 2; i++)
+    {
+        // Precompute indices for rows to improve readability and possibly performance
+        int row1 = i * dim;
+        int row2 = (i + 1) * dim;
+        int row3 = (i + 2) * dim;
+
+        // Initialize sums for the first block
+        current_sum.sumRed = 0;
+        current_sum.sumGreen = 0;
+        current_sum.sumBlue = 0;
+        for (int k = 0; k < 3; k++)
+        { // Only need to do this once per row
+            current_sum.sumRed += src[row1 + k].red + src[row2 + k].red + src[row3 + k].red;
+            current_sum.sumGreen += src[row1 + k].green + src[row2 + k].green + src[row3 + k].green;
+            current_sum.sumBlue += src[row1 + k].blue + src[row2 + k].blue + src[row3 + k].blue;
+        }
+
+        // Set the first pixel's value
+        dst[row1].red = current_sum.sumRed / 9;
+        dst[row1].green = current_sum.sumGreen / 9;
+        dst[row1].blue = current_sum.sumBlue / 9;
+
+        // Slide the window across the row
+        for (int j = 1; j < dim - 2; j++)
+        {
+            // Subtract the pixels leaving the window
+            current_sum.sumRed -= src[row1 + j - 1].red + src[row2 + j - 1].red + src[row3 + j - 1].red;
+            current_sum.sumGreen -= src[row1 + j - 1].green + src[row2 + j - 1].green + src[row3 + j - 1].green;
+            current_sum.sumBlue -= src[row1 + j - 1].blue + src[row2 + j - 1].blue + src[row3 + j - 1].blue;
+
+            // Add the pixels entering the window
+            current_sum.sumRed += src[row1 + j + 2].red + src[row2 + j + 2].red + src[row3 + j + 2].red;
+            current_sum.sumGreen += src[row1 + j + 2].green + src[row2 + j + 2].green + src[row3 + j + 2].green;
+            current_sum.sumBlue += src[row1 + j + 2].blue + src[row2 + j + 2].blue + src[row3 + j + 2].blue;
+
+            // Set the current pixel's value
+            int currentIndex = row1 + j;
+            dst[currentIndex].red = current_sum.sumRed / 9;
+            dst[currentIndex].green = current_sum.sumGreen / 9;
+            dst[currentIndex].blue = current_sum.sumBlue / 9;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // register int i = dim - 2;
+    // register int baseIndex = RIDX(i, 0, dim);
+    // register int sumRed = src[baseIndex].red + src[baseIndex + 1].red + src[baseIndex + 2].red +
+    //                       src[baseIndex + dim].red + src[baseIndex + dim + 1].red + src[baseIndex + dim + 2].red;
+    // register int sumGreen = src[baseIndex].green + src[baseIndex + 1].green + src[baseIndex + 2].green +
+    //                         src[baseIndex + dim].green + src[baseIndex + dim + 1].green + src[baseIndex + dim + 2].green;
+    // register int sumBlue = src[baseIndex].blue + src[baseIndex + 1].blue + src[baseIndex + 2].blue +
+    //                        src[baseIndex + dim].blue + src[baseIndex + dim + 1].blue + src[baseIndex + dim + 2].blue;
+    // // Set the first pixel's value based on the precomputed sum
+    // dst[baseIndex].red = sumRed / 6;
+    // dst[baseIndex].green = sumGreen / 6;
+    // dst[baseIndex].blue = sumBlue / 6;
+
+    // // For each subsequent pixel in the row, manually adjust the sum by adding the new column
+    // for (int j = 1; j < dim - 2; j++)
+    // {
+    //     register int currentIndex = RIDX(i, j, dim);
+    //     register int newColIndex = currentIndex + 2;
+
+    //     // Adjust sums by adding the new column and subtracting the old column
+    //     sumRed += src[newColIndex + dim].red + src[newColIndex].red -
+    //               (src[currentIndex - 1].red + src[currentIndex - 1 + dim].red);
+
+    //     sumGreen += src[newColIndex + dim].green + src[newColIndex].green -
+    //                 (src[currentIndex - 1].green + src[currentIndex - 1 + dim].green);
+
+    //     sumBlue += src[newColIndex + dim].blue + src[newColIndex].blue -
+    //                (src[currentIndex - 1].blue + src[currentIndex - 1 + dim].blue);
+
+    //     // Set the current pixel's value based on the adjusted sum
+    //     dst[currentIndex].red = sumRed / 6;
+    //     dst[currentIndex].green = sumGreen / 6;
+    //     dst[currentIndex].blue = sumBlue / 6;
+    // }
+
+    pixel_sum edge_sum;
+
+    int i = dim - 2;
+    int baseIndex = RIDX(i, 0, dim);
+
+    // Initialize sums for the first block at the bottom edge
+    edge_sum.sumRed = src[baseIndex].red + src[baseIndex + 1].red + src[baseIndex + 2].red +
+                      src[baseIndex + dim].red + src[baseIndex + dim + 1].red + src[baseIndex + dim + 2].red;
+    edge_sum.sumGreen = src[baseIndex].green + src[baseIndex + 1].green + src[baseIndex + 2].green +
+                        src[baseIndex + dim].green + src[baseIndex + dim + 1].green + src[baseIndex + dim + 2].green;
+    edge_sum.sumBlue = src[baseIndex].blue + src[baseIndex + 1].blue + src[baseIndex + 2].blue +
+                       src[baseIndex + dim].blue + src[baseIndex + dim + 1].blue + src[baseIndex + dim + 2].blue;
+
+    // Set the first pixel's value based on the precomputed sum
+    dst[baseIndex].red = edge_sum.sumRed / 6;
+    dst[baseIndex].green = edge_sum.sumGreen / 6;
+    dst[baseIndex].blue = edge_sum.sumBlue / 6;
+
+    // For each subsequent pixel in the row, manually adjust the sum by adding the new column
+    for (int j = 1; j < dim - 2; j++)
+    {
+        int currentIndex = RIDX(i, j, dim);
+        int newColIndex = currentIndex + 2;
+
+        // Adjust sums by adding the new column and subtracting the old column
+        edge_sum.sumRed += src[newColIndex + dim].red + src[newColIndex].red -
+                           (src[currentIndex - 1].red + src[currentIndex - 1 + dim].red);
+
+        edge_sum.sumGreen += src[newColIndex + dim].green + src[newColIndex].green -
+                             (src[currentIndex - 1].green + src[currentIndex - 1 + dim].green);
+
+        edge_sum.sumBlue += src[newColIndex + dim].blue + src[newColIndex].blue -
+                            (src[currentIndex - 1].blue + src[currentIndex - 1 + dim].blue);
+
+        // Set the current pixel's value based on the adjusted sum
+        dst[currentIndex].red = edge_sum.sumRed / 6;
+        dst[currentIndex].green = edge_sum.sumGreen / 6;
+        dst[currentIndex].blue = edge_sum.sumBlue / 6;
+    }
+
+    // int j = dim - 2;
+    // for (int i = 0; i < dim - 2; i++)
+    // {
+    //     register int index = RIDX(i, j, dim);
+    //     register int sumRed = src[index].red + src[index + 1].red +
+    //                           src[index + dim].red + src[index + dim + 1].red +
+    //                           src[index + 2 * dim].red + src[index + 2 * dim + 1].red;
+    //     register int sumGreen = src[index].green + src[index + 1].green +
+    //                             src[index + dim].green + src[index + dim + 1].green +
+    //                             src[index + 2 * dim].green + src[index + 2 * dim + 1].green;
+    //     register int sumBlue = src[index].blue + src[index + 1].blue +
+    //                            src[index + dim].blue + src[index + dim + 1].blue +
+    //                            src[index + 2 * dim].blue + src[index + 2 * dim + 1].blue;
+    //     dst[index].red = sumRed / 6;
+    //     dst[index].green = sumGreen / 6;
+    //     dst[index].blue = sumBlue / 6;
+    // }
+
+    // // Processing for the right edge
+    // pixel_sum edge_sum_right;
+    // int j = dim - 2; // Targeting the second to last column for right edge processing
+    // for (int i = 0; i < dim - 2; i++) {
+    //     edge_sum_right.sumRed = edge_sum_right.sumGreen = edge_sum_right.sumBlue = 0;
+    //     int index = RIDX(i, j, dim);
+
+    //     // Initialize sums for the block of 2x3 pixels
+    //     for (int m = 0; m < 3; m++) {
+    //         int idx = index + m * dim;
+    //         edge_sum_right.sumRed += src[idx].red + src[idx + 1].red;
+    //         edge_sum_right.sumGreen += src[idx].green + src[idx + 1].green;
+    //         edge_sum_right.sumBlue += src[idx].blue + src[idx + 1].blue;
+    //     }
+
+    //     // Set the pixel's value based on the adjusted sum
+    //     dst[index].red = edge_sum_right.sumRed / 6;
+    //     dst[index].green = edge_sum_right.sumGreen / 6;
+    //     dst[index].blue = edge_sum_right.sumBlue / 6;
+    // }
+
+    // Right edge processing with optimization
+    pixel_sum edge_sum_right;
+    int j = dim - 2; // Targeting the second to last column for right edge processing
+
+    // Precompute the starting index for the right edge
+    int startIdxRightEdge = RIDX(0, j, dim);
+
+    // Initialize sums for the first block of 2x3 pixels on the right edge
+    edge_sum_right.sumRed = src[startIdxRightEdge].red + src[startIdxRightEdge + 1].red +
+                            src[startIdxRightEdge + dim].red + src[startIdxRightEdge + dim + 1].red +
+                            src[startIdxRightEdge + 2 * dim].red + src[startIdxRightEdge + 2 * dim + 1].red;
+    edge_sum_right.sumGreen = src[startIdxRightEdge].green + src[startIdxRightEdge + 1].green +
+                              src[startIdxRightEdge + dim].green + src[startIdxRightEdge + dim + 1].green +
+                              src[startIdxRightEdge + 2 * dim].green + src[startIdxRightEdge + 2 * dim + 1].green;
+    edge_sum_right.sumBlue = src[startIdxRightEdge].blue + src[startIdxRightEdge + 1].blue +
+                             src[startIdxRightEdge + dim].blue + src[startIdxRightEdge + dim + 1].blue +
+                             src[startIdxRightEdge + 2 * dim].blue + src[startIdxRightEdge + 2 * dim + 1].blue;
+
+    // Set the first pixel's value based on the precomputed sum
+    dst[startIdxRightEdge].red = edge_sum_right.sumRed / 6;
+    dst[startIdxRightEdge].green = edge_sum_right.sumGreen / 6;
+    dst[startIdxRightEdge].blue = edge_sum_right.sumBlue / 6;
+
+    // For each subsequent pixel in the column, adjust the sum by considering the new 2x3 block
+    for (int i = 1; i < dim - 2; i++)
+    {
+        int index = RIDX(i, j, dim);
+        int idxAbove = index - dim;     // Index of the pixel above the current block
+        int idxBelow = index + 2 * dim; // Index of the pixel below the current block
+
+        // Adjust sums by subtracting the topmost row's values and adding the new bottom row's values
+        edge_sum_right.sumRed += src[idxBelow].red + src[idxBelow + 1].red - (src[idxAbove].red + src[idxAbove + 1].red);
+        edge_sum_right.sumGreen += src[idxBelow].green + src[idxBelow + 1].green - (src[idxAbove].green + src[idxAbove + 1].green);
+        edge_sum_right.sumBlue += src[idxBelow].blue + src[idxBelow + 1].blue - (src[idxAbove].blue + src[idxAbove + 1].blue);
+
+        // Set the current pixel's value based on the adjusted sum
+        dst[index].red = edge_sum_right.sumRed / 6;
+        dst[index].green = edge_sum_right.sumGreen / 6;
+        dst[index].blue = edge_sum_right.sumBlue / 6;
+    }
+
+    // for (int j = 0; j < dim - 2; j++)
+    // {
+    //     register int index = RIDX((dim - 1), j, dim);
+    //     register int sumRed = src[index].red + src[index + 1].red + src[index + 2].red;
+    //     register int sumGreen = src[index].green + src[index + 1].green + src[index + 2].green;
+    //     register int sumBlue = src[index].blue + src[index + 1].blue + src[index + 2].blue;
+
+    //     dst[index].red = sumRed / 3;
+    //     dst[index].green = sumGreen / 3;
+    //     dst[index].blue = sumBlue / 3;
+    // }
+
+    // for (int i = 0; i < dim - 2; i++)
+    // {
+    //     int index = RIDX(i, (dim - 1), dim);
+    //     dst[index].red = (src[index].red + src[index + dim].red + src[index + dim * 2].red) / 3;
+    //     dst[index].green = (src[index].green + src[index + dim].green + src[index + dim * 2].green) / 3;
+    //     dst[index].blue = (src[index].blue + src[index + dim].blue + src[index + dim * 2].blue) / 3;
+    // }
+
+    // Optimizing the bottom edge processing
+    for (int j = 0; j < dim - 2; j++)
+    {
+        int index = RIDX(dim - 1, j, dim); // Last row, starting from the left
+        pixel_sum sum = {0, 0, 0};         // Using a struct to hold sums if defined, otherwise just use int vars
+
+        // Assuming continuous memory access, prefetch next block of data if beneficial
+        __builtin_prefetch(&src[index + 3]); // Uncomment if beneficial
+
+        for (int k = 0; k < 3; k++)
+        {
+            pixel p = src[index + k];
+            sum.sumRed += p.red;
+            sum.sumGreen += p.green;
+            sum.sumBlue += p.blue;
+        }
+
+        dst[index].red = sum.sumRed / 3;
+        dst[index].green = sum.sumGreen / 3;
+        dst[index].blue = sum.sumBlue / 3;
+    }
+
+    // Optimizing the right edge processing
+    for (int i = 0; i < dim - 2; i++)
+    {
+        int index = RIDX(i, dim - 1, dim); // Last column, starting from the top
+        pixel_sum sum = {0, 0, 0};         // Using a struct to hold sums if defined, otherwise just use int vars
+
+        for (int k = 0; k < 3; k++)
+        {
+            int offset = k * dim; // Vertical offset for accessing pixels above/below
+            pixel p = src[index + offset];
+            sum.sumRed += p.red;
+            sum.sumGreen += p.green;
+            sum.sumBlue += p.blue;
+        }
+
+        dst[index].red = sum.sumRed / 3;
+        dst[index].green = sum.sumGreen / 3;
+        dst[index].blue = sum.sumBlue / 3;
+    }
+
+    register int index1 = RIDX(dim - 2, dim - 2, dim);
+    register int redSum = src[index1].red + src[index1 + 1].red + src[index1 + dim].red + src[index1 + dim + 1].red;
+    register int greenSum = src[index1].green + src[index1 + 1].green + src[index1 + dim].green + src[index1 + dim + 1].green;
+    register int blueSum = src[index1].blue + src[index1 + 1].blue + src[index1 + dim].blue + src[index1 + dim + 1].blue;
+    dst[index1].red = redSum >> 2;
+    dst[index1].green = greenSum >> 2;
+    dst[index1].blue = blueSum >> 2;
+
+    register int index2 = RIDX(dim - 2, dim - 1, dim);
+    dst[index2].red = (src[index2].red + src[index2 + dim].red) >> 1;
+    dst[index2].green = (src[index2].green + src[index2 + dim].green) >> 1;
+    dst[index2].blue = (src[index2].blue + src[index2 + dim].blue) >> 1;
+
+    register int index3 = RIDX(dim - 1, dim - 2, dim);
+    dst[index3].red = (src[index3].red + src[index3 + 1].red) >> 1;
+    dst[index3].green = (src[index3].green + src[index3 + 1].green) >> 1;
+    dst[index3].blue = (src[index3].blue + src[index3 + 1].blue) >> 1;
+
+    register int last_index = RIDX(dim - 1, dim - 1, dim);
+    dst[last_index] = src[last_index];
+}
+
+/*********************************************************************
+ * register_motion_functions - Register all of your different versions
+ *     of the motion kernel with the driver by calling the
+ *     add_motion_function() for each test function.  When you run the
+ *     driver program, it will test and report the performance of each
+ *     registered test function.
+ *********************************************************************/
+
+void register_motion_functions()
+{
+    add_motion_function(&motion, motion_descr);
+    // add_motion_function(&naive_motion, naive_motion_descr);
+}
